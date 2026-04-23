@@ -1,0 +1,118 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "Metadata for clinic staff.",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" },
+        "role": { "type": "string", "enum": ["admin", "doctor", "nurse", "secretary"] },
+        "displayName": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["email", "role"]
+    },
+    "Patient": {
+      "title": "Patient",
+      "description": "Electronic Health Record (EHR) base data.",
+      "type": "object",
+      "properties": {
+        "firstName": { "type": "string" },
+        "lastName": { "type": "string" },
+        "birthDate": { "type": "string", "format": "date" },
+        "gender": { "type": "string" },
+        "phone": { "type": "string" },
+        "email": { "type": "string" },
+        "idNumber": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["firstName", "lastName"]
+    },
+    "Appointment": {
+      "title": "Appointment",
+      "description": "Scheduled clinic visits.",
+      "type": "object",
+      "properties": {
+        "patientId": { "type": "string" },
+        "doctorId": { "type": "string" },
+        "startTime": { "type": "string", "format": "date-time" },
+        "type": { "type": "string" },
+        "status": { "type": "string", "enum": ["scheduled", "confirmed", "completed", "cancelled", "no-show"] },
+        "notes": { "type": "string" }
+      },
+      "required": ["patientId", "startTime"]
+    },
+    "Consultation": {
+      "title": "Consultation",
+      "description": "Clinical encounter data.",
+      "type": "object",
+      "properties": {
+        "patientId": { "type": "string" },
+        "appointmentId": { "type": "string" },
+        "doctorId": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" },
+        "acuityOD": { "type": "string" },
+        "acuityOS": { "type": "string" },
+        "pioOD": { "type": "number" },
+        "pioOS": { "type": "number" },
+        "slitLampSummary": { "type": "string" },
+        "fundusSummary": { "type": "string" },
+        "status": { "type": "string", "enum": ["draft", "final"] }
+      },
+      "required": ["patientId", "doctorId"]
+    },
+    "Imaging": {
+      "title": "Imaging",
+      "description": "Medical scans (OCT, Fundus).",
+      "type": "object",
+      "properties": {
+        "patientId": { "type": "string" },
+        "consultationId": { "type": "string" },
+        "diagnosisId": { "type": "string" },
+        "type": { "type": "string", "enum": ["OCT", "Fundus", "VisualField"] },
+        "eye": { "type": "string", "enum": ["OD", "OS", "OU"] },
+        "storagePath": { "type": "string" },
+        "uploadedBy": { "type": "string" },
+        "analysisResult": { "type": "object" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["patientId", "storagePath"]
+    },
+    "MedicalOpinion": {
+      "title": "Medical Opinion",
+      "description": "Structured physician judgment.",
+      "type": "object",
+      "properties": {
+        "consultationId": { "type": "string" },
+        "patientId": { "type": "string" },
+        "state": { "type": "string", "enum": ["Stable", "À surveiller", "Critique"] },
+        "evolution": { "type": "string", "enum": ["Amélioration", "Stable", "Détérioration"] },
+        "riskLevel": { "type": "string", "enum": ["Faible", "Moyen", "Élevé"] },
+        "recommendation": { "type": "string" },
+        "notes": { "type": "string" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "RiskScore": {
+      "title": "Risk Score",
+      "description": "AI-calculated risk metrics.",
+      "type": "object",
+      "properties": {
+        "patientId": { "type": "string" },
+        "type": { "type": "string" },
+        "score": { "type": "number" },
+        "factors": { "type": "array" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      }
+    }
+  },
+  "firestore": {
+    "/profiles/{uid}": { "schema": "UserProfile", "description": "Staff profiles." },
+    "/patients/{patientId}": { "schema": "Patient", "description": "Patient records." },
+    "/appointments/{appointmentId}": { "schema": "Appointment", "description": "Clinic schedule." },
+    "/consultations/{consultationId}": { "schema": "Consultation", "description": "Patient visits." },
+    "/imaging/{imageId}": { "schema": "Imaging", "description": "Scans and metadata." },
+    "/medical_opinions/{opinionId}": { "schema": "MedicalOpinion", "description": "Clinical decisions." },
+    "/risk_scores/{scoreId}": { "schema": "RiskScore", "description": "AI outputs." }
+  }
+}

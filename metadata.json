@@ -1,0 +1,13 @@
+{
+  "name": "OphthaGuard AI",
+  "description": "Professional ophthalmology clinic management system with predictive AI, clinical decision support, and zero-typing consultation workflows.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ],
+  "majorCapabilities": [
+    "predictive_ai",
+    "clinical_workflow_automation",
+    "secure_medical_records"
+  ]
+}

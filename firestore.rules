@@ -1,0 +1,91 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Default Deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Helpers ---
+    function isSignedIn() { 
+      return request.auth != null && request.auth.token.email_verified == true; 
+    }
+    
+    function getUserRole() {
+      return get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.role;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == 'adonislingalinga1@gmail.com' ||
+        (exists(/databases/$(database)/documents/profiles/$(request.auth.uid)) && getUserRole() == 'admin')
+      );
+    }
+
+    function isDoctor() {
+      return isSignedIn() && exists(/databases/$(database)/documents/profiles/$(request.auth.uid)) && getUserRole() == 'doctor';
+    }
+
+    function canManagePatients() {
+      return isAdmin() || isDoctor() || (isSignedIn() && exists(/databases/$(database)/documents/profiles/$(request.auth.uid)) && getUserRole() in ['secretary', 'nurse']);
+    }
+
+    function canManageMedicalData() {
+      return isAdmin() || isDoctor();
+    }
+    
+    function isValidId(id) { return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+
+    // --- Rules ---
+
+    match /profiles/{uid} {
+      allow get: if isSignedIn() && (request.auth.uid == uid || canManagePatients());
+      allow list: if isAdmin();
+      allow create: if isSignedIn() && (request.auth.uid == uid || isAdmin());
+      allow update: if isAdmin(); // Only admins can change roles
+    }
+
+    match /patients/{patientId} {
+      allow read: if canManagePatients();
+      allow create: if canManagePatients() && isValidPatient(incoming());
+      allow update: if canManagePatients() && isValidPatient(incoming());
+
+      function isValidPatient(data) {
+        return data.firstName is string && data.firstName.size() >= 1 && data.firstName.size() <= 100
+            && data.lastName is string && data.lastName.size() >= 1 && data.lastName.size() <= 100;
+      }
+    }
+
+    match /appointments/{appId} {
+      allow read: if canManagePatients();
+      allow create: if canManagePatients();
+      allow update: if canManagePatients();
+    }
+
+    match /consultations/{consId} {
+      allow read: if canManagePatients(); // Secretaries might need to see some info
+      allow create: if canManageMedicalData(); 
+      allow update: if canManageMedicalData();
+    }
+
+    match /imaging/{imgId} {
+      allow read: if canManagePatients();
+      allow create: if canManageMedicalData();
+      allow update: if canManageMedicalData();
+    }
+
+    match /medical_opinions/{opId} {
+      allow read: if canManagePatients();
+      allow create: if canManageMedicalData();
+      allow update: if canManageMedicalData();
+    }
+    
+    match /risk_scores/{scoreId} {
+      allow read: if canManagePatients();
+      allow create: if canManageMedicalData();
+      allow update: if canManageMedicalData();
+    }
+  }
+}
